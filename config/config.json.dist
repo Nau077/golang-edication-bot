@@ -1,0 +1,9 @@
+{
+    "db": {
+      "dsn": "*****",
+      "max_open_connections": 10
+    },
+    "telegram": {
+        "token": "******"
+    }
+}

@@ -1,9 +1,0 @@
-{
-    "db": {
-      "dsn": "host=localhost port=54321 dbname=note-service user=note-service-user password=note-service-password",
-      "max_open_connections": 10
-    },
-    "telegram": {
-        "token": "5766953013:AAE0zJVLUjYj07E4wB7C_c9mJDmV6UcwEu8"
-    }
-}

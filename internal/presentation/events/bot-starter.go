@@ -8,6 +8,10 @@ type TelegramBotStarter struct {
 	consumer *consumer.TelegramConsumer
 }
 
+type BotStarter interface {
+	Start() error
+}
+
 func NewTelegramBotStarter(consumer *consumer.TelegramConsumer) *TelegramBotStarter {
 	return &TelegramBotStarter{
 		consumer: consumer,
