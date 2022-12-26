@@ -12,7 +12,6 @@ type Client interface {
 }
 
 type TelegramClient struct {
-	config *config.Config
 	token  string
 	Client *tgbotapi.BotAPI
 }

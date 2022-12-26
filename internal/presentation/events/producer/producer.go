@@ -24,18 +24,19 @@ type Event struct {
 }
 
 type TelegramProducer struct {
-	telegramClient *client.TelegramClient
+	TelegramClient *client.TelegramClient
 }
 
 func NewTelegramProducer(telegramClient *client.TelegramClient) *TelegramProducer {
+
 	return &TelegramProducer{
-		telegramClient: telegramClient,
+		TelegramClient: telegramClient,
 	}
 }
 
 func (t *TelegramProducer) Send(msg *tgbotapi.MessageConfig) error {
 
-	if _, err := t.telegramClient.Client.Send(msg); err != nil {
+	if _, err := t.TelegramClient.Client.Send(msg); err != nil {
 		return err
 	}
 

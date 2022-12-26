@@ -26,7 +26,6 @@ func (a *App) Run() error {
 	// defer func() {
 	// 	a.provider.db.Close()
 	// }()
-
 	if a.bot != nil {
 		if err := a.bot.Start(); err != nil {
 			fmt.Printf("error at initBot: %s", err)

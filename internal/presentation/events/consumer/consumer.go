@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"fmt"
-	"golang-edication-bot/internal/presentation/client"
 	"golang-edication-bot/internal/services/events/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -13,22 +12,20 @@ type Consumer interface {
 }
 
 type TelegramConsumer struct {
-	processor      *telegram.TelegramProcessor
-	telegramClient *client.TelegramClient
+	processor *telegram.TelegramProcessor
 }
 
-func NewTelegramConsumer(processor *telegram.TelegramProcessor, telegramClient *client.TelegramClient) *TelegramConsumer {
+func NewTelegramConsumer(processor *telegram.TelegramProcessor) *TelegramConsumer {
 
 	return &TelegramConsumer{
-		processor:      processor,
-		telegramClient: telegramClient,
+		processor: processor,
 	}
 }
 
 func (t *TelegramConsumer) Fetch() error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	updates := t.telegramClient.Client.GetUpdatesChan(u)
+	updates := t.processor.Producer.TelegramClient.Client.GetUpdatesChan(u)
 	fmt.Println("start fetch updates")
 
 	for update := range updates {
@@ -40,7 +37,7 @@ func (t *TelegramConsumer) Fetch() error {
 			continue
 		}
 
-		err := t.processor.Process(&*update.Message)
+		err := t.processor.Process(update.Message)
 
 		if err != nil {
 			return err

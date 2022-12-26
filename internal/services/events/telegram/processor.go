@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 	"golang-edication-bot/internal/infrustructure/config"
+	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
 	"strings"
 
@@ -15,27 +16,43 @@ type ProcessProcessor interface {
 
 type TelegramProcessor struct {
 	config   *config.Config
-	producer *producer.TelegramProducer
+	Producer *producer.TelegramProducer
+	repo     repositories.InfoData
 }
 
-func NewTelegramProcessor(config *config.Config, producer *producer.TelegramProducer) *TelegramProcessor {
+type ProcArgs struct {
+	Config   *config.Config
+	Producer *producer.TelegramProducer
+	Repo     repositories.InfoData
+}
+
+func NewTelegramProcessor(procArgs *ProcArgs) *TelegramProcessor {
 	return &TelegramProcessor{
-		config:   config,
-		producer: producer,
+		config:   procArgs.Config,
+		Producer: procArgs.Producer,
+		repo:     procArgs.Repo,
 	}
 }
 
 func (t *TelegramProcessor) Process(msg *tgbotapi.Message) error {
 	text := strings.ToLower(msg.Text)
 
-	var command = NewComand(t.producer)
+	var command = NewCommand(t.Producer, t.repo)
 
-	if command.commandsMap[text] == nil {
+	if command.GetCommandsMap()[text] == nil {
 		fmt.Println("no command")
 		return nil
 	}
 
-	err := command.commandsMap[text](msg)
+	handler, ok := command.GetCommandsMap()[text]
+
+	if !ok {
+		fmt.Println("no command")
+		return nil
+	}
+
+	err := handler(msg)
+
 	if err != nil {
 		return err
 	}
