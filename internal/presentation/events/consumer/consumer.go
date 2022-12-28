@@ -29,33 +29,17 @@ func (t *TelegramConsumer) Fetch() error {
 	fmt.Println("start fetch updates")
 
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
 
-		if !update.Message.IsCommand() {
-			continue
-		}
+		// if !update.Message.IsCommand() {
+		// 	continue
+		// }
 
-		err := t.processor.Process(update.Message)
+		err := t.processor.Process(&update)
 
 		if err != nil {
 			return err
 		}
 
-		// if update.Message.NewChatParticipant.UserName != "" {
-		// 		// В чат вошел новый пользователь
-		// 		// Поприветствуем его
-		// 		reply = fmt.Sprintf(`Привет @%s! Я тут слежу за порядком. Веди себя хорошо.`,
-		// 			update.Message.NewChatParticipant.UserName)
-		//  }
-
-		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-
-		// UserName := update.Message.From.UserName
-		// UserID := update.Message.From.ID
-		// ChatID := update.Message.Chat.ID
-		// Text := update.Message.Text
 	}
 
 	return nil

@@ -13,7 +13,7 @@ import (
 )
 
 type Provider struct {
-	configPath string
+	staticPath string
 	config     *config.Config
 	commands   *telegram.Command
 	processor  *telegram.TelegramProcessor
@@ -24,15 +24,16 @@ type Provider struct {
 	goInfoRepo repositories.InfoData
 }
 
-func NewProvider(configPath string) *Provider {
+func NewProvider(staticPath string) *Provider {
 	return &Provider{
-		configPath: configPath,
+		staticPath: staticPath,
 	}
 }
 
 func (p *Provider) GetConfig() *config.Config {
 	if p.config == nil {
-		cfg, err := config.NewConfig(p.configPath)
+		configPath := p.staticPath + "/config/config.json"
+		cfg, err := config.NewConfig(configPath)
 		if err != nil {
 			log.Fatalf("failed to get config: %s", err.Error())
 		}
@@ -57,7 +58,7 @@ func (p *Provider) GetClient() *client.TelegramClient {
 
 func (p Provider) GetGoInfoRepo() repositories.InfoData {
 	if p.goInfoRepo == nil {
-		g := repositories.NewGoInfoRepo()
+		g := repositories.NewGoInfoRepo(p.staticPath)
 
 		p.goInfoRepo = g
 	}

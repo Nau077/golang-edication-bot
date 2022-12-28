@@ -9,13 +9,13 @@ import (
 
 type App struct {
 	provider   *telegram.Provider
-	pathConfig string
+	staticPath string
 	bot        events.BotStarter
 }
 
-func NewApp(ctx context.Context, pathConfig string) (*App, error) {
+func NewApp(ctx context.Context, staticPath string) (*App, error) {
 	a := &App{
-		pathConfig: pathConfig,
+		staticPath: staticPath,
 	}
 	err := a.initDeps(ctx)
 
@@ -52,8 +52,7 @@ func (a *App) initDeps(ctx context.Context) error {
 }
 
 func (a *App) initProvider(_ context.Context) error {
-	const configPath = "/home/roman/web/golang-projects/go-userfind-bot/config/config.json"
-	a.provider = telegram.NewProvider(configPath)
+	a.provider = telegram.NewProvider(a.staticPath)
 
 	return nil
 }

@@ -1,33 +1,43 @@
 package repositories
 
 import (
-	"encoding/json"
-	"golang-edication-bot/internal/services/events/telegram/models"
 	"io/ioutil"
+	"log"
+	"os"
 )
 
 type InfoData interface {
-	GetData(fileName string) (*models.GoInfoData, error)
+	GetData(fileName string) ([]byte, error)
 }
 
 type goInfoRepo struct {
+	staticPath string
 }
 
-func NewGoInfoRepo() *goInfoRepo {
-	return &goInfoRepo{}
+func NewGoInfoRepo(staticPath string) *goInfoRepo {
+	return &goInfoRepo{
+		staticPath: staticPath,
+	}
 }
 
-func (g *goInfoRepo) GetData(fileName string) (*models.GoInfoData, error) {
-	file, err := ioutil.ReadFile("./go_base_data/" + fileName)
+func (g *goInfoRepo) GetData(fileName string) ([]byte, error) {
+	// file, err := ioutil.ReadFile(g.staticPath + "/go-base-data/" + fileName)
+	file, err := os.Open(g.staticPath + "/go-base-data/" + fileName)
 	if err != nil {
 		return nil, err
 	}
-	data := models.GoInfoData{}
+	// data := models.GoInfoData{}
+	defer func() {
+		if err = file.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	err = json.Unmarshal([]byte(file), &data)
+	data, err := ioutil.ReadAll(file)
+	// err = json.Unmarshal([]byte(file), &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return &data, nil
+	return data, nil
 }

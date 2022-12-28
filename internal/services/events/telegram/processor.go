@@ -5,7 +5,6 @@ import (
 	"golang-edication-bot/internal/infrustructure/config"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
-	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -34,8 +33,19 @@ func NewTelegramProcessor(procArgs *ProcArgs) *TelegramProcessor {
 	}
 }
 
-func (t *TelegramProcessor) Process(msg *tgbotapi.Message) error {
-	text := strings.ToLower(msg.Text)
+func (t *TelegramProcessor) Process(update *tgbotapi.Update) error {
+	var text string
+	var chatId int64
+
+	if update.Message == nil && update.CallbackQuery != nil {
+		chatId = update.CallbackQuery.Message.Chat.ID
+		text = update.CallbackQuery.Data
+	}
+
+	if update.Message != nil {
+		chatId = update.Message.Chat.ID
+		text = update.Message.Text
+	}
 
 	var command = NewCommand(t.Producer, t.repo)
 
@@ -51,7 +61,7 @@ func (t *TelegramProcessor) Process(msg *tgbotapi.Message) error {
 		return nil
 	}
 
-	err := handler(msg)
+	err := handler(chatId, text)
 
 	if err != nil {
 		return err

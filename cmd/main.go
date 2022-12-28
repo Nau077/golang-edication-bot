@@ -2,21 +2,17 @@ package main
 
 import (
 	"context"
-	"flag"
+	"fmt"
 	"golang-edication-bot/internal"
 	"log"
+	"os"
 )
 
-var pathConfig string
-
-func init() {
-	flag.StringVar(&pathConfig, "config", "config/config.json", "Path to configuration file")
-}
-
 func main() {
-	flag.Parse()
+	staticPath := os.Args[1]
 	ctx := context.Background()
-	a, err := internal.NewApp(ctx, "")
+	fmt.Println(staticPath)
+	a, err := internal.NewApp(ctx, staticPath)
 
 	err = a.Run()
 	if err != nil {
