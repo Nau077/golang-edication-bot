@@ -27,7 +27,6 @@ type Config struct {
 	DB          DB          `json:"db"`
 }
 
-// new config
 func NewConfig(path string) (*Config, error) {
 	file, err := os.ReadFile(path)
 	if err != nil {

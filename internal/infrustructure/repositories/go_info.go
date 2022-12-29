@@ -1,26 +1,47 @@
 package repositories
 
 import (
+	"context"
+	"golang-edication-bot/internal/infrustructure/libs/db"
+	"golang-edication-bot/internal/services/events/telegram/models"
 	"io/ioutil"
 	"log"
 	"os"
+
+	sq "github.com/Masterminds/squirrel"
+)
+
+const (
+	GO_INFO = "go_info"
 )
 
 type InfoData interface {
-	GetData(fileName string) ([]byte, error)
+	GetData(ctx context.Context, name string) (*models.GoInfo, error)
 }
 
 type goInfoRepo struct {
 	staticPath string
 }
 
-func NewGoInfoRepo(staticPath string) *goInfoRepo {
+type goInfoPgRepo struct {
+	staticPath string
+	client     db.Client
+}
+
+func NewGoInfoRepo(staticPath string, db db.Client) *goInfoRepo {
 	return &goInfoRepo{
 		staticPath: staticPath,
 	}
 }
 
-func (g *goInfoRepo) GetData(fileName string) ([]byte, error) {
+func NewGoInfoPgRepo(staticPath string, db db.Client) *goInfoPgRepo {
+	return &goInfoPgRepo{
+		staticPath: staticPath,
+		client:     db,
+	}
+}
+
+func (g *goInfoRepo) GetData(_ context.Context, fileName string) (*models.GoInfo, error) {
 	// file, err := ioutil.ReadFile(g.staticPath + "/go-base-data/" + fileName)
 	file, err := os.Open(g.staticPath + "/go-base-data/" + fileName)
 	if err != nil {
@@ -34,10 +55,38 @@ func (g *goInfoRepo) GetData(fileName string) ([]byte, error) {
 	}()
 
 	data, err := ioutil.ReadAll(file)
+
+	var goInfo = new(models.GoInfo)
+	goInfo.Text = string(data)
 	// err = json.Unmarshal([]byte(file), &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return goInfo, nil
+}
+
+func (g *goInfoPgRepo) GetData(ctx context.Context, name string) (*models.GoInfo, error) {
+	builder := sq.Select("id, title, text, created_at, updated_at").
+		PlaceholderFormat(sq.Dollar).
+		From(GO_INFO).
+		Where(sq.Eq{"title": name}).
+		Limit(1)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	q := db.Query{
+		Name:     "GetGoInfo",
+		QueryRaw: query,
+	}
+	var goInfo = new(models.GoInfo)
+
+	err = g.client.DB().GetContext(ctx, goInfo, q, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return goInfo, nil
 }

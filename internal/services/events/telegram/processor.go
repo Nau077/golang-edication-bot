@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	"golang-edication-bot/internal/infrustructure/config"
 	"golang-edication-bot/internal/infrustructure/repositories"
@@ -17,12 +18,14 @@ type TelegramProcessor struct {
 	config   *config.Config
 	Producer *producer.TelegramProducer
 	repo     repositories.InfoData
+	ctx      context.Context
 }
 
 type ProcArgs struct {
 	Config   *config.Config
 	Producer *producer.TelegramProducer
 	Repo     repositories.InfoData
+	Ctx      context.Context
 }
 
 func NewTelegramProcessor(procArgs *ProcArgs) *TelegramProcessor {
@@ -30,6 +33,7 @@ func NewTelegramProcessor(procArgs *ProcArgs) *TelegramProcessor {
 		config:   procArgs.Config,
 		Producer: procArgs.Producer,
 		repo:     procArgs.Repo,
+		ctx:      procArgs.Ctx,
 	}
 }
 
@@ -47,7 +51,7 @@ func (t *TelegramProcessor) Process(update *tgbotapi.Update) error {
 		text = update.Message.Text
 	}
 
-	var command = NewCommand(t.Producer, t.repo)
+	var command = NewCommand(t.Producer, t.repo, t.ctx)
 
 	if command.GetCommandsMap()[text] == nil {
 		fmt.Println("no command")

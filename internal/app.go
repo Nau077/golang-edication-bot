@@ -23,9 +23,10 @@ func NewApp(ctx context.Context, staticPath string) (*App, error) {
 }
 
 func (a *App) Run() error {
-	// defer func() {
-	// 	a.provider.db.Close()
-	// }()
+	defer func() {
+		a.provider.GetDB().Close()
+	}()
+
 	if a.bot != nil {
 		if err := a.bot.Start(); err != nil {
 			fmt.Printf("error at initBot: %s", err)
@@ -51,8 +52,8 @@ func (a *App) initDeps(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) initProvider(_ context.Context) error {
-	a.provider = telegram.NewProvider(a.staticPath)
+func (a *App) initProvider(ctx context.Context) error {
+	a.provider = telegram.NewProvider(a.staticPath, ctx)
 
 	return nil
 }

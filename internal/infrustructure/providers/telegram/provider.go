@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"golang-edication-bot/internal/infrustructure/config"
+	"golang-edication-bot/internal/infrustructure/libs/db"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/client"
 	"golang-edication-bot/internal/presentation/events"
@@ -22,11 +23,14 @@ type Provider struct {
 	producer   *producer.TelegramProducer
 	botStarter *events.TelegramBotStarter
 	goInfoRepo repositories.InfoData
+	db         db.Client
+	ctx        context.Context
 }
 
-func NewProvider(staticPath string) *Provider {
+func NewProvider(staticPath string, ctx context.Context) *Provider {
 	return &Provider{
 		staticPath: staticPath,
+		ctx:        ctx,
 	}
 }
 
@@ -56,9 +60,26 @@ func (p *Provider) GetClient() *client.TelegramClient {
 	return p.client
 }
 
+func (p *Provider) GetDB() db.Client {
+	if p.db == nil {
+		cfg, err := p.GetConfig().GetDBConfig()
+		if err != nil {
+			log.Fatalf("failed to get db config: %s", err.Error())
+		}
+
+		dbc, err := db.NewClient(p.ctx, cfg)
+		if err != nil {
+			log.Fatalf("cant connect to db err %s", err.Error())
+		}
+		p.db = dbc
+	}
+
+	return p.db
+}
+
 func (p Provider) GetGoInfoRepo() repositories.InfoData {
 	if p.goInfoRepo == nil {
-		g := repositories.NewGoInfoRepo(p.staticPath)
+		g := repositories.NewGoInfoPgRepo(p.staticPath, p.GetDB())
 
 		p.goInfoRepo = g
 	}
@@ -84,6 +105,7 @@ func (p *Provider) GetProcessor() *telegram.TelegramProcessor {
 				Config:   p.GetConfig(),
 				Producer: p.GetProducer(),
 				Repo:     p.GetGoInfoRepo(),
+				Ctx:      p.ctx,
 			},
 		)
 

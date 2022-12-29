@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
 
@@ -12,13 +13,15 @@ type Handler func(chatId int64, text string) error
 type Command struct {
 	producer   *producer.TelegramProducer
 	goInfoRepo repositories.InfoData
+	ctx        context.Context
 }
 
-func NewCommand(producer *producer.TelegramProducer, goInfoRepo repositories.InfoData) *Command {
+func NewCommand(producer *producer.TelegramProducer, goInfoRepo repositories.InfoData, ctx context.Context) *Command {
 
 	return &Command{
 		producer:   producer,
 		goInfoRepo: goInfoRepo,
+		ctx:        ctx,
 	}
 }
 
@@ -94,28 +97,28 @@ func (c *Command) helpCommand(chatId int64, text string) error {
 }
 
 func (c *Command) getStringsInfoCommand(chatId int64, _ string) error {
-	// stringsData, err := c.goInfoRepo.GetData("strings.json")
-	// if err != nil {
-	// 	return err
-	// }
+	data, err := c.goInfoRepo.GetData(c.ctx, "strings")
+	if err != nil {
+		return err
+	}
 
-	// message := tgbotapi.NewMessage(chatId, string(stringsData))
-	// message.ParseMode = tgbotapi.ModeMarkdown
-	// err = c.producer.Send(&message)
-	// if err != nil {
-	// 	return err
-	// }
+	message := tgbotapi.NewMessage(chatId, data.Text)
+	message.ParseMode = tgbotapi.ModeMarkdown
+	err = c.producer.Send(&message)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (c *Command) getNumbersInfoCommand(chatId int64, _ string) error {
-	stringsData, err := c.goInfoRepo.GetData("numbers.txt")
+	goInfo, err := c.goInfoRepo.GetData(c.ctx, "numbers")
 	if err != nil {
 		return err
 	}
 
-	message := tgbotapi.NewMessage(chatId, string(stringsData))
+	message := tgbotapi.NewMessage(chatId, goInfo.Text)
 	message.ParseMode = tgbotapi.ModeHTML
 	err = c.producer.Send(&message)
 	if err != nil {
