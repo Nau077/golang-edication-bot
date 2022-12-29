@@ -1,3 +1,4 @@
+ROOT:=$(shell name)
 LOCAL_MIGRATION_DIR=./migrations
 LOCAL_MIGRATION_DSN="host=localhost port=54322 dbname=edication-bot user=edication-bot-user password=edication-bot-password"
 
@@ -11,14 +12,19 @@ run/bot:
 local-migration-status:
 	goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
 
-.PHONY: local-migration-up
+.PHONY: migrate-up
 migrate-up:
 	goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} up -v
 
-.PHONY: local-migration-down
+.PHONY: migrate-down
 migrate-down:
 	goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} down -v
 
+.PHONY: create-migration
+create-migration:
+	@cd migrations; \
+	goose create $(ARGS) sql
 .PHONY: run/db
 run/db:
 	docker-compose up pg-edication-bot-db
+
