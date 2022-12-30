@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"fmt"
 	"golang-edication-bot/internal/infrustructure/config"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
@@ -54,14 +53,14 @@ func (t *TelegramProcessor) Process(update *tgbotapi.Update) error {
 	var command = NewCommand(t.Producer, t.repo, t.ctx)
 
 	if command.GetCommandsMap()[text] == nil {
-		fmt.Println("no command")
+		command.SendNoCommandsMsg(chatId)
 		return nil
 	}
 
 	handler, ok := command.GetCommandsMap()[text]
 
 	if !ok {
-		fmt.Println("no command")
+		command.SendNoCommandsMsg(chatId)
 		return nil
 	}
 
