@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
+	"golang-edication-bot/internal/services/events/telegram/models"
 	"math"
+	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -13,29 +15,36 @@ import (
 type Handler func(chatId int64, text string) error
 
 type Command struct {
-	producer   *producer.TelegramProducer
-	goInfoRepo repositories.InfoData
-	ctx        context.Context
+	producer *producer.TelegramProducer
+	repos    *repositories.Container
+	ctx      context.Context
 }
 
-func NewCommand(producer *producer.TelegramProducer, goInfoRepo repositories.InfoData, ctx context.Context) *Command {
+type CommandArgs struct {
+}
+
+func NewCommand(producer *producer.TelegramProducer, repos *repositories.Container, ctx context.Context) *Command {
 
 	return &Command{
-		producer:   producer,
-		goInfoRepo: goInfoRepo,
-		ctx:        ctx,
+		producer: producer,
+		repos:    repos,
+		ctx:      ctx,
 	}
 }
 
 func (c *Command) GetCommandsMap() map[string]Handler {
 	m := map[string]Handler{
-		"/start":                 c.startCommand,
-		"/help":                  c.helpCommand,
-		"/getDataTypes":          c.getDataTypesCommand,
-		"/getStringsInfo":        c.getStringsInfoCommand,
-		"/getNumbersInfoCommand": c.getNumbersInfoCommand,
-		"/getMapsInfoCommand":    c.getMapsInfoCommand,
-		"/getGolangInfo":         c.getGolangInfo,
+		"/start":                  c.startCommand,
+		"/help":                   c.helpCommand,
+		"/getSytemDesignTopics":   c.getSytemDesignTopics,
+		"/getTaskCommand":         c.getTaskCommand,
+		"/getGolangInfo":          c.getGolangInfo,
+		"/getDataTypes":           c.getDataTypesCommand,
+		"/getStringsInfo":         c.getStringsInfoCommand,
+		"/getNumbersInfoCommand":  c.getNumbersInfoCommand,
+		"/getMapsInfoCommand":     c.getMapsInfoCommand,
+		"/geStructureInfoCommand": c.geStructureInfoCommand,
+		"/getLoopsInfoCommand":    c.getLoopsInfoCommand,
 	}
 
 	return m
@@ -55,10 +64,10 @@ func (c *Command) startCommand(chatId int64, text string) error {
 	var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Теория golang", "/getGolangInfo"),
-			tgbotapi.NewInlineKeyboardButtonData("System-design party", "/getDataTypes"),
+			tgbotapi.NewInlineKeyboardButtonData("System-design party", "/getSytemDesignTopics"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Задачки", "/getTasks"),
+			tgbotapi.NewInlineKeyboardButtonData("Задачки", "/getTaskCommand"),
 			tgbotapi.NewInlineKeyboardButtonData("Help", "/help"),
 		),
 	)
@@ -77,7 +86,7 @@ func (c *Command) getGolangInfo(chatId int64, text string) error {
 	var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Типы и структуры данных", "/getDataTypes"),
-			tgbotapi.NewInlineKeyboardButtonData("Циклы", "/getLoopsInfo"),
+			tgbotapi.NewInlineKeyboardButtonData("Циклы", "/getLoopsInfoCommand"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Условные выражения", "/getConditionsInfo"),
@@ -116,9 +125,7 @@ func (c *Command) getDataTypesCommand(chatId int64, text string) error {
 			tgbotapi.NewInlineKeyboardButtonData("Map", "/getMapsInfoCommand"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("4", "4"),
-			tgbotapi.NewInlineKeyboardButtonData("5", "5"),
-			tgbotapi.NewInlineKeyboardButtonData("6", "6"),
+			tgbotapi.NewInlineKeyboardButtonData("Структуры", "/geStructureInfoCommand"),
 		),
 	)
 
@@ -143,7 +150,7 @@ func (c *Command) helpCommand(chatId int64, text string) error {
 }
 
 func (c *Command) getStringsInfoCommand(chatId int64, _ string) error {
-	data, err := c.goInfoRepo.GetData(c.ctx, "strings")
+	data, err := c.repos.GoInfoRepo.GetData(c.ctx, "strings")
 	if err != nil {
 		return err
 	}
@@ -159,7 +166,7 @@ func (c *Command) getStringsInfoCommand(chatId int64, _ string) error {
 }
 
 func (c *Command) getNumbersInfoCommand(chatId int64, _ string) error {
-	goInfo, err := c.goInfoRepo.GetData(c.ctx, "numbers")
+	goInfo, err := c.repos.GoInfoRepo.GetData(c.ctx, "numbers")
 	if err != nil {
 		return err
 	}
@@ -177,7 +184,7 @@ func (c *Command) getNumbersInfoCommand(chatId int64, _ string) error {
 func (c *Command) getMapsInfoCommand(chatId int64, _ string) error {
 	fmt.Println("in getMapsInfoCommand")
 
-	goInfo, err := c.goInfoRepo.GetData(c.ctx, "maps")
+	goInfo, err := c.repos.GoInfoRepo.GetData(c.ctx, "maps")
 	if err != nil {
 		return err
 	}
@@ -210,11 +217,173 @@ func (c *Command) getMapsInfoCommand(chatId int64, _ string) error {
 	return nil
 }
 
+func (c *Command) geStructureInfoCommand(chatId int64, _ string) error {
+
+	goInfo, err := c.repos.GoInfoRepo.GetData(c.ctx, "structure")
+	if err != nil {
+		return err
+	}
+
+	maxTgMsgLen := 4096
+
+	if len(goInfo.Text) > maxTgMsgLen {
+
+		subs := SplitSubN(goInfo.Text, maxTgMsgLen)
+
+		for i := 0; i < len(subs); i++ {
+			message := tgbotapi.NewMessage(chatId, subs[i])
+			message.ParseMode = tgbotapi.ModeHTML
+			err = c.producer.Send(&message)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	message := tgbotapi.NewMessage(chatId, goInfo.Text)
+	message.ParseMode = tgbotapi.ModeHTML
+	err = c.producer.Send(&message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Command) getLoopsInfoCommand(chatId int64, _ string) error {
+
+	goInfo, err := c.repos.GoInfoRepo.GetData(c.ctx, "loops")
+	if err != nil {
+		return err
+	}
+
+	maxTgMsgLen := 4096
+
+	if len(goInfo.Text) > maxTgMsgLen {
+
+		subs := SplitSubN(goInfo.Text, maxTgMsgLen)
+
+		for i := 0; i < len(subs); i++ {
+			message := tgbotapi.NewMessage(chatId, subs[i])
+			message.ParseMode = tgbotapi.ModeHTML
+			err = c.producer.Send(&message)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	message := tgbotapi.NewMessage(chatId, goInfo.Text)
+	message.ParseMode = tgbotapi.ModeHTML
+	err = c.producer.Send(&message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Command) getSytemDesignTopics(chatId int64, _ string) error {
+	goInfoList, err := c.repos.GoInfoRepo.GetDataListType(c.ctx, "system_design")
+	if err != nil {
+		return err
+	}
+	var stRecords []models.SystemDesignMsg
+
+	for _, record := range goInfoList {
+		stRecords = append(stRecords, models.SystemDesignMsg{
+			Title: record.Title,
+			Text:  record.Text,
+		})
+	}
+	var text string
+
+	for i := 0; i < len(stRecords); i++ {
+		text = text + strconv.Itoa(i) + ") " +
+			stRecords[i].Title + " " + "<b>" +
+			stRecords[i].Text + "</b>" + "\n"
+	}
+
+	message := tgbotapi.NewMessage(chatId, text)
+	message.ParseMode = tgbotapi.ModeHTML
+	err = c.producer.Send(&message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Command) getTaskCommand(chatId int64, _ string) error {
+
+	task, err := c.repos.GoTasksPgRepo.GetTask(c.ctx)
+	if err != nil {
+		return err
+	}
+
+	maxTgMsgLen := 4096
+
+	var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Ответ на задачу", "/TasksSolution:{"+strconv.FormatInt(task.Id, 10)+"}"),
+		),
+	)
+
+	if len(task.TasksText) > maxTgMsgLen {
+
+		subs := SplitSubN(task.TasksText, maxTgMsgLen)
+
+		for i := 0; i < len(subs); i++ {
+			message := tgbotapi.NewMessage(chatId, subs[i])
+			message.ParseMode = tgbotapi.ModeHTML
+			message.ReplyMarkup = numericKeyboard
+			err = c.producer.Send(&message)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	message := tgbotapi.NewMessage(chatId, task.TasksText)
+	message.ReplyMarkup = numericKeyboard
+	message.ParseMode = tgbotapi.ModeHTML
+	err = c.producer.Send(&message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Command) GetTaskSolution(chatId int64, id int64) error {
+	solution, err := c.repos.GoTasksPgRepo.GetTasksSolution(c.ctx, id)
+	if err != nil {
+		return err
+	}
+
+	message := tgbotapi.NewMessage(chatId, solution)
+	message.ParseMode = tgbotapi.ModeHTML
+
+	err = c.producer.Send(&message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func SplitSubN(str string, size int) []string {
 	strLength := len(str)
 	splitedLength := int(math.Ceil(float64(strLength) / float64(size)))
 	splited := make([]string, splitedLength)
 	var start, stop int
+
 	for i := 0; i < splitedLength; i += 1 {
 		start = i * size
 		stop = start + size
@@ -223,5 +392,6 @@ func SplitSubN(str string, size int) []string {
 		}
 		splited[i] = str[start:stop]
 	}
+
 	return splited
 }

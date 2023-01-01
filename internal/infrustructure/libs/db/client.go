@@ -30,8 +30,6 @@ func NewClient(ctx context.Context, config *pgxpool.Config) (Client, error) {
 	}, nil
 }
 
-// close() отменяет контекст
-// у пуллера вызывает close()
 func (c *client) Close() error {
 	if c != nil {
 		if c.closeFunc != nil {

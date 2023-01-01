@@ -5,6 +5,9 @@ import (
 	"golang-edication-bot/internal/infrustructure/config"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
+	"regexp"
+	"strconv"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -16,14 +19,14 @@ type ProcessProcessor interface {
 type TelegramProcessor struct {
 	config   *config.Config
 	Producer *producer.TelegramProducer
-	repo     repositories.InfoData
+	repos    *repositories.Container
 	ctx      context.Context
 }
 
 type ProcArgs struct {
 	Config   *config.Config
 	Producer *producer.TelegramProducer
-	Repo     repositories.InfoData
+	Repos    *repositories.Container
 	Ctx      context.Context
 }
 
@@ -31,7 +34,7 @@ func NewTelegramProcessor(procArgs *ProcArgs) *TelegramProcessor {
 	return &TelegramProcessor{
 		config:   procArgs.Config,
 		Producer: procArgs.Producer,
-		repo:     procArgs.Repo,
+		repos:    procArgs.Repos,
 		ctx:      procArgs.Ctx,
 	}
 }
@@ -50,7 +53,19 @@ func (t *TelegramProcessor) Process(update *tgbotapi.Update) error {
 		text = update.Message.Text
 	}
 
-	var command = NewCommand(t.Producer, t.repo, t.ctx)
+	var command = NewCommand(t.Producer, t.repos, t.ctx)
+
+	if strings.Contains(text, "{") {
+		re := regexp.MustCompile("[0-9]+")
+		result := re.FindAllString(text, -1)
+		i, err := strconv.ParseInt(result[0], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		command.GetTaskSolution(chatId, i)
+		return nil
+	}
 
 	if command.GetCommandsMap()[text] == nil {
 		command.SendNoCommandsMsg(chatId)

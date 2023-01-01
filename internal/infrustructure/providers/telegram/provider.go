@@ -22,7 +22,7 @@ type Provider struct {
 	consumer   *consumer.TelegramConsumer
 	producer   *producer.TelegramProducer
 	botStarter *events.TelegramBotStarter
-	goInfoRepo repositories.InfoData
+	repos      *repositories.Container
 	db         db.Client
 	ctx        context.Context
 }
@@ -78,13 +78,21 @@ func (p *Provider) GetDB() db.Client {
 }
 
 func (p Provider) GetGoInfoRepo() repositories.InfoData {
-	if p.goInfoRepo == nil {
-		g := repositories.NewGoInfoPgRepo(p.staticPath, p.GetDB())
+	return repositories.NewGoInfoPgRepo(p.staticPath, p.GetDB())
+}
 
-		p.goInfoRepo = g
+func (p Provider) GetGoTasksRepo() repositories.TasksInfo {
+	return repositories.NewTasksPgRepo(p.staticPath, p.GetDB())
+}
+
+func (p Provider) GetRepos() *repositories.Container {
+	if p.repos == nil {
+		g := repositories.NewContainer(p.GetGoInfoRepo(), p.GetGoTasksRepo())
+
+		p.repos = g
 	}
 
-	return p.goInfoRepo
+	return p.repos
 }
 
 func (p *Provider) GetProducer() *producer.TelegramProducer {
@@ -104,7 +112,7 @@ func (p *Provider) GetProcessor() *telegram.TelegramProcessor {
 			&telegram.ProcArgs{
 				Config:   p.GetConfig(),
 				Producer: p.GetProducer(),
-				Repo:     p.GetGoInfoRepo(),
+				Repos:    p.GetRepos(),
 				Ctx:      p.ctx,
 			},
 		)
