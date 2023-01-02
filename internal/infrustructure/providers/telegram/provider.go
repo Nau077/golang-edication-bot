@@ -16,7 +16,6 @@ import (
 type Provider struct {
 	staticPath string
 	config     *config.Config
-	commands   *telegram.Command
 	processor  *telegram.TelegramProcessor
 	client     *client.TelegramClient
 	consumer   *consumer.TelegramConsumer

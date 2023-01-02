@@ -43,12 +43,11 @@ func NewGoInfoPgRepo(staticPath string, db db.Client) *goInfoPgRepo {
 }
 
 func (g *goInfoRepo) GetData(_ context.Context, fileName string) (*models.GoInfo, error) {
-	// file, err := ioutil.ReadFile(g.staticPath + "/go-base-data/" + fileName)
 	file, err := os.Open(g.staticPath + "/go-base-data/" + fileName)
 	if err != nil {
 		return nil, err
 	}
-	// data := models.GoInfoData{}
+
 	defer func() {
 		if err = file.Close(); err != nil {
 			log.Fatal(err)
@@ -56,13 +55,12 @@ func (g *goInfoRepo) GetData(_ context.Context, fileName string) (*models.GoInfo
 	}()
 
 	data, err := ioutil.ReadAll(file)
-
-	var goInfo = new(models.GoInfo)
-	goInfo.Text = string(data)
-	// err = json.Unmarshal([]byte(file), &data)
 	if err != nil {
 		return nil, err
 	}
+
+	var goInfo = new(models.GoInfo)
+	goInfo.Text = string(data)
 
 	return goInfo, nil
 }

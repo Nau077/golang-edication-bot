@@ -5,6 +5,7 @@ import (
 	"golang-edication-bot/internal/infrustructure/config"
 	"golang-edication-bot/internal/infrustructure/repositories"
 	"golang-edication-bot/internal/presentation/events/producer"
+	commands "golang-edication-bot/internal/services/events/telegram/commands"
 	"regexp"
 	"strconv"
 	"strings"
@@ -53,7 +54,7 @@ func (t *TelegramProcessor) Process(update *tgbotapi.Update) error {
 		text = update.Message.Text
 	}
 
-	var command = NewCommand(t.Producer, t.repos, t.ctx)
+	var command = commands.NewCommand(t.Producer, t.repos, t.ctx)
 
 	if strings.Contains(text, "{") {
 		re := regexp.MustCompile("[0-9]+")
