@@ -30,6 +30,7 @@ func (a *App) Run() error {
 	if a.bot != nil {
 		if err := a.bot.Start(); err != nil {
 			fmt.Printf("error at initBot: %s", err)
+			return err
 		}
 	}
 

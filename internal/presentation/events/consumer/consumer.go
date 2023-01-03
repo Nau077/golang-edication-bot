@@ -30,10 +30,6 @@ func (t *TelegramConsumer) Fetch() error {
 
 	for update := range updates {
 
-		// if !update.Message.IsCommand() {
-		// 	continue
-		// }
-
 		err := t.processor.Process(&update)
 
 		if err != nil {
