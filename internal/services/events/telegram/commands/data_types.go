@@ -14,6 +14,7 @@ func (c *Command) getDataTypesCommand(chatId int64, _ string) error {
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Структуры", "/geStructureInfoCommand"),
+			tgbotapi.NewInlineKeyboardButtonData("Массивы и срезы", "/getSlicesInfo"),
 		),
 	)
 

@@ -31,7 +31,6 @@ var numericKeyboardStart = tgbotapi.NewInlineKeyboardMarkup(
 )
 
 func NewCommand(producer *producer.TelegramProducer, repos *repositories.Container, ctx context.Context) *Command {
-
 	return &Command{
 		producer: producer,
 		repos:    repos,
@@ -41,17 +40,21 @@ func NewCommand(producer *producer.TelegramProducer, repos *repositories.Contain
 
 func (c *Command) GetCommandsMap() map[string]Handler {
 	m := map[string]Handler{
-		"/start":                  c.startCommand,
-		"/help":                   c.helpCommand,
-		"/getSytemDesignTopics":   c.getSytemDesignTopics,
-		"/getTaskCommand":         c.getTaskCommand,
-		"/getGolangInfo":          c.getGolangInfo,
-		"/getDataTypes":           c.getDataTypesCommand,
-		"/getStringsInfo":         c.getStringsInfoCommand,
-		"/getNumbersInfoCommand":  c.getNumbersInfoCommand,
-		"/getMapsInfoCommand":     c.getMapsInfoCommand,
-		"/geStructureInfoCommand": c.geStructureInfoCommand,
-		"/getLoopsInfoCommand":    c.getLoopsInfoCommand,
+		"/start":                    c.startCommand,
+		"/help":                     c.helpCommand,
+		"/getSytemDesignTopics":     c.getSytemDesignTopics,
+		"/getTaskCommand":           c.getTaskCommand,
+		"/getGolangInfo":            c.getGolangInfo,
+		"/getDataTypes":             c.getDataTypesCommand,
+		"/getStringsInfo":           c.getStringsInfoCommand,
+		"/getNumbersInfoCommand":    c.getNumbersInfoCommand,
+		"/getMapsInfoCommand":       c.getMapsInfoCommand,
+		"/geStructureInfoCommand":   c.geStructureInfoCommand,
+		"/getSlicesInfo":            c.getSlicesInfo,
+		"/getLoopsInfoCommand":      c.getLoopsInfoCommand,
+		"/getConditionsInfoCommand": c.getConditionsInfoCommand,
+		"/getFilesWork":             c.getFilesWork,
+		"/getFunctionsInfoCommand":  c.getFunctionsInfoCommand,
 	}
 
 	return m
@@ -59,6 +62,7 @@ func (c *Command) GetCommandsMap() map[string]Handler {
 
 func (c *Command) SendNoCommandsMsg(chatId int64) error {
 	message := tgbotapi.NewMessage(chatId, "Такой команды не существует")
+	message.ReplyMarkup = numericKeyboardStart
 
 	err := c.producer.Send(&message)
 	if err != nil {

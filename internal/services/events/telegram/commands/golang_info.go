@@ -11,12 +11,12 @@ func (c *Command) getGolangInfo(chatId int64, _ string) error {
 			tgbotapi.NewInlineKeyboardButtonData("Циклы", "/getLoopsInfoCommand"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Условные выражения", "/getConditionsInfo"),
-			tgbotapi.NewInlineKeyboardButtonData("Работы с файлами", "/getFilesWorkInfo"),
+			tgbotapi.NewInlineKeyboardButtonData("Условные выражения", "/getConditionsInfoCommand"),
+			tgbotapi.NewInlineKeyboardButtonData("Работа с файлами", "/getFilesWork"),
 		),
 
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Функции", "/getFunctionsInfo"),
+			tgbotapi.NewInlineKeyboardButtonData("Функции", "/getFunctionsInfoCommand"),
 			tgbotapi.NewInlineKeyboardButtonData("Работа с json", "/getJsonWorkInfo"),
 			tgbotapi.NewInlineKeyboardButtonData("Указатели", "/getPointersInfo"),
 		),

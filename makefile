@@ -5,7 +5,7 @@ LOCAL_MIGRATION_DSN="host=localhost port=54322 dbname=edication-bot user=edicati
 BIN_SENDER := ./bin
 PATH_STATIC_DATA := ./static
 
-.PHONY: run/server
+.PHONY: run/bot
 run/bot:
 		go run ./cmd/main.go ${PATH_STATIC_DATA}
 .PHONY: local-migration-status

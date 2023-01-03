@@ -31,11 +31,11 @@ func (c *Command) getSytemDesignTopics(chatId int64, _ string) error {
 			Text:  record.Text,
 		})
 	}
-	var text string
+	var text string = "<b>System-design, основные темы:</b>\n"
 
 	for i := 0; i < len(stRecords); i++ {
-		text = text + strconv.Itoa(i) + ") " +
-			stRecords[i].Title + " " + "<b>" +
+		text = text + " " + strconv.Itoa(i+1) + ") " +
+			"<b>" +
 			stRecords[i].Text + "</b>" + "\n"
 	}
 
